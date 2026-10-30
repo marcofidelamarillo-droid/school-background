@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blue Particle Background</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #06152e;
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(10, 65, 130, 0.15),
+      rgba(2, 12, 32, 0.55)
+    );
+  pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="particles"></canvas>
+<div class="overlay"></div>
+
+<script>
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
+
+let particles = [];
+let width, height;
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  width = window.innerWidth;
+  height = window.innerHeight;
+
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  createParticles();
+}
+
+class Particle {
+  constructor() {
+    this.x = Math.random() * width;
+    this.y = Math.random() * height;
+    this.size = Math.random() * 2.2 + 0.7;
+    this.speedX = (Math.random() - 0.5) * 0.5;
+    this.speedY = (Math.random() - 0.5) * 0.5;
+    this.opacity = Math.random() * 0.6 + 0.3;
+  }
+
+  move() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+
+    if (this.x < 0 || this.x > width) this.speedX *= -1;
+    if (this.y < 0 || this.y > height) this.speedY *= -1;
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(90, 185, 255, ${this.opacity})`;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = "#168bff";
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+function createParticles() {
+  const count = Math.min(
+    120,
+    Math.floor(width * height / 9000)
+  );
+
+  particles = [];
+
+  for (let i = 0; i < count; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function connectParticles() {
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < 135) {
+        ctx.beginPath();
+        ctx.strokeStyle =
+          `rgba(45, 145, 255, ${0.22 * (1 - distance / 135)})`;
+        ctx.lineWidth = 0.7;
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function animate() {
+  ctx.clearRect(0, 0, width, height);
+
+  for (const particle of particles) {
+    particle.move();
+    particle.draw();
+  }
+
+  connectParticles();
+  requestAnimationFrame(animate);
+}
+
+window.addEventListener("resize", resize);
+
+resize();
+animate();
+</script>
+
+</body>
+</html>
